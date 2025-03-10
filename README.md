@@ -7,3 +7,6 @@ ln -s ~/keyboard_firmware/corne ~/qmk_firmware/keyboards/crkbd/keymaps/corne
 Compile the firmware:
 qmk compile -kb lily58 -km oaktoad -e CONVERT_TO=rp2040_ce
 qmk compile -kb crkbd -km corne -e CONVERT_TO=rp2040_ce
+
+For the Cone V4 from Aliexpress, you need to use the following website to flash the firmware:
+https://vial.rocks/
