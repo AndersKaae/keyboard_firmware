@@ -18,6 +18,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include QMK_KEYBOARD_H
 
+enum os_type {
+    OS_LINUX = 0,
+    OS_MAC = 1
+};
+
+#define EECONFIG_OS_TYPE 0x30
+
+uint8_t current_os = OS_MAC;
+
+void eeconfig_init_user(void) {
+    // Set default OS if EEPROM is reset
+    current_os = OS_MAC;
+    eeprom_update_byte((uint8_t*)EECONFIG_OS_TYPE, current_os);
+}
+
+void keyboard_post_init_user(void) {
+    // Load OS setting from EEPROM on startup
+    current_os = eeprom_read_byte((uint8_t*)EECONFIG_OS_TYPE);
+}
+
+void set_os(uint8_t os) {
+    current_os = os;
+    eeprom_update_byte((uint8_t*)EECONFIG_OS_TYPE, os);
+}
+
+enum custom_keycodes {
+    TOGGLE_OS = SAFE_RANGE
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (!record->event.pressed) return true;
+
+    switch (keycode) {
+        case TOGGLE_OS:
+            set_os(current_os == OS_LINUX ? OS_MAC : OS_LINUX);
+            return false;
+    }
+
+    return true;
+}
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT_split_3x6_3(
   //,-----------------------------------------------------.                    ,-----------------------------------------------------.
@@ -60,7 +101,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //,-----------------------------------------------------.                    ,-----------------------------------------------------.
       QK_BOOT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      KC_MUTE, KC_VOLD, KC_VOLU, XXXXXXX, XXXXXXX, XXXXXXX,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      RM_TOGG, RM_HUEU, RM_SATU, RM_VALU, XXXXXXX, XXXXXXX,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      RM_TOGG, RM_HUEU, RM_SATU, RM_VALU, XXXXXXX, XXXXXXX,                      XXXXXXX, TOGGLE_OS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
       RM_NEXT, RM_HUED, RM_SATD, RM_VALD, XXXXXXX, XXXXXXX,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
@@ -76,4 +117,48 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
   [2] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT), ENCODER_CCW_CW(RM_VALD, RM_VALU), ENCODER_CCW_CW(KC_RGHT, KC_LEFT), },
   [3] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT), ENCODER_CCW_CW(RM_VALD, RM_VALU), ENCODER_CCW_CW(KC_RGHT, KC_LEFT), },
 };
+#endif
+
+#ifdef OLED_ENABLE
+
+#include "print.h"
+#include "wpm.h"
+
+oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    return OLED_ROTATION_0;
+}
+
+const char *get_layer_name(uint8_t layer) {
+    switch (layer) {
+        case 0: return "Base";
+        case 1: return "Lower";
+        case 2: return "Raise";
+        case 3: return "Fn";
+        default: return "???";
+    }
+}
+
+bool oled_task_user(void) {
+    if (is_keyboard_master()) {
+        // Row 1: Layer
+        uint8_t layer = get_highest_layer(layer_state);
+        char layer_str[20];
+        snprintf(layer_str, sizeof(layer_str), "Layer: %s", get_layer_name(layer));
+        oled_write_ln(layer_str, false);
+
+        // Row 2: WPM
+        char wpm_str[20];
+        snprintf(wpm_str, sizeof(wpm_str), "WPM:   %3d", get_current_wpm());
+        oled_write_ln(wpm_str, false);
+
+        // Row 3: OS Mode
+        char os_str[20];
+        snprintf(os_str, sizeof(os_str), "OS Mode: %s", current_os == OS_MAC ? "Mac" : "Linux");
+        oled_write_ln(os_str, false);
+    } else {
+        oled_write_ln(PSTR(""), false);
+    }
+    return false;
+}
+
 #endif
