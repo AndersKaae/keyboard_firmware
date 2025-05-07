@@ -44,7 +44,13 @@ void set_os(uint8_t os) {
 }
 
 enum custom_keycodes {
-    TOGGLE_OS = SAFE_RANGE
+    TOGGLE_OS = SAFE_RANGE,
+    AT_SIGN,
+    DOLLAR,
+    LESS_THAN,
+    GREATER_THAN,
+    L_BRACKET,
+    R_BRACKET
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -53,6 +59,54 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case TOGGLE_OS:
             set_os(current_os == OS_LINUX ? OS_MAC : OS_LINUX);
+            return false;
+
+        case AT_SIGN:
+            if (current_os == OS_MAC) {
+                tap_code16(LALT(KC_NUHS));
+            } else {
+                tap_code16(RALT(KC_2));
+            }
+            return false;
+
+        case DOLLAR:
+            if (current_os == OS_MAC) {
+                tap_code16(LALT(LSFT(KC_3)));
+            } else {
+                tap_code16(RALT(KC_4));
+            }
+            return false;
+
+        case LESS_THAN:
+            if (current_os == OS_MAC) {
+                tap_code16(KC_GRV);
+            } else {
+                tap_code16(KC_NUBS);
+            }
+            return false;
+
+        case GREATER_THAN:
+            if (current_os == OS_MAC) {
+                tap_code16(LALT(LSFT(KC_GRV)));
+            } else {
+                tap_code16(LSFT(KC_NUBS));
+            }
+            return false;
+
+        case L_BRACKET:
+            if (current_os == OS_MAC) {
+                tap_code16(LALT(KC_8));
+            } else {
+                tap_code16(RALT(KC_8));
+            }
+            return false;
+
+        case R_BRACKET:
+            if (current_os == OS_MAC) {
+                tap_code16(LALT(KC_9));
+            } else {
+                tap_code16(RALT(KC_9));
+            }
             return false;
     }
 
@@ -87,11 +141,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [2] = LAYOUT_split_3x6_3(
   //,-----------------------------------------------------.                    ,-----------------------------------------------------.
-      _______, KC_EXLM, KC_AT, KC_HASH, KC_DLR, KC_PERC,                      KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, LALT(KC_NUHS),
+      _______, KC_EXLM, KC_AT, KC_HASH, KC_DLR, KC_PERC,                      KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, AT_SIGN,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      KC_TAB, XXXXXXX, LALT(LSFT(KC_3)), LALT(KC_8), LALT(KC_9), LALT(KC_I),                KC_LEFT, KC_DOWN, KC_UP,   KC_RIGHT, XXXXXXX,  XXXXXXX,
+      KC_TAB, XXXXXXX, DOLLAR, L_BRACKET, R_BRACKET, LALT(KC_I),                KC_LEFT, KC_DOWN, KC_UP,   KC_RIGHT, XXXXXXX,  XXXXXXX,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      _______, XXXXXXX, XXXXXXX, KC_GRV, LSFT(KC_GRV), XXXXXXX,                 XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______,
+      _______, XXXXXXX, XXXXXXX, LESS_THAN, GREATER_THAN, XXXXXXX,                 XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______,
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
                                           KC_LGUI,   MO(3),  KC_SPC,     KC_ENT, _______, KC_RALT
                                       //`--------------------------'  `--------------------------'
