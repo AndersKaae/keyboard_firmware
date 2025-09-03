@@ -17,30 +17,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include QMK_KEYBOARD_H
+#include "eeconfig.h"
 
+// Stores/reads a single user byte in eeconfig (portable across AVR/ARM)
 enum os_type {
     OS_LINUX = 0,
     OS_MAC = 1
 };
 
-#define EECONFIG_OS_TYPE 0x30
-
-uint8_t current_os = OS_MAC;
+static uint8_t current_os = OS_MAC;
 
 void eeconfig_init_user(void) {
-    // Set default OS if EEPROM is reset
+    // Called when eeconfig is reset (e.g., via bootmagic or EEPROM clear)
     current_os = OS_MAC;
-    eeprom_update_byte((uint8_t*)EECONFIG_OS_TYPE, current_os);
+    eeconfig_update_user(current_os);
 }
 
 void keyboard_post_init_user(void) {
-    // Load OS setting from EEPROM on startup
-    current_os = eeprom_read_byte((uint8_t*)EECONFIG_OS_TYPE);
+    // Load OS from eeconfig; sanitize in case EEPROM is uninitialized/garbage
+    uint8_t v = eeconfig_read_user();
+    if (v > OS_MAC) {          // guard against 0xFF or invalid values
+        v = OS_MAC;
+        eeconfig_update_user(v);
+    }
+    current_os = v;
 }
 
 void set_os(uint8_t os) {
     current_os = os;
-    eeprom_update_byte((uint8_t*)EECONFIG_OS_TYPE, os);
+    eeconfig_update_user(os);
 }
 
 enum custom_keycodes {
