@@ -47,7 +47,7 @@ void set_os(uint8_t os) {
 }
 
 enum custom_keycodes {
-    TOGGLE_OS = SAFE_RANGE,
+    TOGGLE_OS = QK_USER,
     AT_SIGN,
     DOLLAR,
     LESS_THAN,
@@ -57,27 +57,17 @@ enum custom_keycodes {
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (!record->event.pressed) return true;
-
-    static bool esc_pressed = false;  // Track if Esc is pressed
-
-    if (!record->event.pressed) {
-        if (keycode == KC_ESC) {
-            esc_pressed = false;  // Reset the state when Esc is released
-        }
+#if defined(CONSOLE_ENABLE) && CONSOLE_ENABLE
+    if (record->event.pressed) {
+        uint8_t lyr = get_highest_layer(layer_state);
+        uprintf("press: kc=%u layer=%u row=%u col=%u\n",
+                keycode, lyr, record->event.key.row, record->event.key.col);
+    } else {
         return true;
     }
-
-    if (keycode == KC_ESC) {
-        esc_pressed = true;  // Set the state when Esc is pressed
-    }
-
-    // Check if Esc + A are pressed simultaneously
-    if (esc_pressed && keycode == KC_A) {
-        // Enter bootloader mode
-        bootloader_jump();
-        return false;  // Prevent further processing of the key
-    }
+#else
+    if (!record->event.pressed) return true;
+#endif
 
     switch (keycode) {
         case TOGGLE_OS:
@@ -85,54 +75,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
 
         case AT_SIGN:
-            if (current_os == OS_MAC) {
-                tap_code16(LALT(KC_NUHS));
-            } else {
-                tap_code16(RALT(KC_2));
-            }
+            if (current_os == OS_MAC) tap_code16(LALT(KC_NUHS));
+            else                      tap_code16(RALT(KC_2));
             return false;
 
         case DOLLAR:
-            if (current_os == OS_MAC) {
-                tap_code16(LALT(LSFT(KC_3)));
-            } else {
-                tap_code16(RALT(KC_4));
-            }
+            if (current_os == OS_MAC) tap_code16(LALT(LSFT(KC_3)));
+            else                      tap_code16(RALT(KC_4));
             return false;
 
         case LESS_THAN:
-            if (current_os == OS_MAC) {
-                tap_code16(KC_GRV);
-            } else {
-                tap_code16(KC_NUBS);
-            }
+            if (current_os == OS_MAC) tap_code16(KC_GRV);
+            else                      tap_code16(KC_NUBS);
             return false;
 
         case GREATER_THAN:
-            if (current_os == OS_MAC) {
-                tap_code16(LALT(LSFT(KC_GRV)));
-            } else {
-                tap_code16(LSFT(KC_NUBS));
-            }
+            if (current_os == OS_MAC) tap_code16(LALT(LSFT(KC_GRV)));
+            else                      tap_code16(LSFT(KC_NUBS));
             return false;
 
         case L_BRACKET:
-            if (current_os == OS_MAC) {
-                tap_code16(LALT(KC_8));
-            } else {
-                tap_code16(RALT(KC_8));
-            }
+            if (current_os == OS_MAC) tap_code16(LALT(KC_8));
+            else                      tap_code16(RALT(KC_8));
             return false;
 
         case R_BRACKET:
-            if (current_os == OS_MAC) {
-                tap_code16(LALT(KC_9));
-            } else {
-                tap_code16(RALT(KC_9));
-            }
+            if (current_os == OS_MAC) tap_code16(LALT(KC_9));
+            else                      tap_code16(RALT(KC_9));
             return false;
     }
-
     return true;
 }
 
