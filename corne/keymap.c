@@ -1,6 +1,4 @@
 /*
-Copyright 2019 @foostan
-Copyright 2020 Drashna Jaelre <@drashna>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,6 +58,26 @@ enum custom_keycodes {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) return true;
+
+    static bool esc_pressed = false;  // Track if Esc is pressed
+
+    if (!record->event.pressed) {
+        if (keycode == KC_ESC) {
+            esc_pressed = false;  // Reset the state when Esc is released
+        }
+        return true;
+    }
+
+    if (keycode == KC_ESC) {
+        esc_pressed = true;  // Set the state when Esc is pressed
+    }
+
+    // Check if Esc + A are pressed simultaneously
+    if (esc_pressed && keycode == KC_A) {
+        // Enter bootloader mode
+        bootloader_jump();
+        return false;  // Prevent further processing of the key
+    }
 
     switch (keycode) {
         case TOGGLE_OS:
